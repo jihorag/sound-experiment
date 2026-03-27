@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>소리의 높낮이 실험</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&family=Black+Han+Sans&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#0d1117;min-height:100%}
+body{font-family:'Nanum Gothic',sans-serif;color:#e6edf3;padding:24px 14px 40px;display:flex;flex-direction:column;align-items:center}
+h1{font-family:'Black Han Sans',sans-serif;font-size:clamp(18px,4vw,28px);color:#e6edf3;margin-bottom:5px;text-align:center}
+.sub{font-size:13px;color:#7d8590;text-align:center;margin-bottom:22px}
+.wrap{width:100%;max-width:820px;display:flex;flex-direction:column;gap:10px}
+.panel{background:#161b22;border:0.5px solid #30363d;border-radius:14px;padding:14px 16px}
+.stage{display:flex;align-items:flex-end;justify-content:center;gap:clamp(4px,1.8vw,18px);padding:18px 10px 0;background:#161b22;border:0.5px solid #30363d;border-radius:14px;min-height:230px;position:relative;overflow:hidden}
+.floor{position:absolute;bottom:0;left:0;right:0;height:20px;background:#1c2128;border-top:1.5px solid #30363d}
+.cup{display:flex;flex-direction:column;align-items:center;gap:5px;padding-bottom:24px;cursor:pointer;transition:transform .15s;position:relative;user-select:none}
+.cup:hover{transform:translateY(-3px)}
+.cup.active svg{filter:drop-shadow(0 0 10px rgba(88,166,255,.65))}
+.cnote{font-family:'Black Han Sans',sans-serif;font-size:14px;color:#79c0ff}
+.cpct{font-size:10px;color:#7d8590;font-weight:700}
+.ripple{position:absolute;border-radius:50%;border:1.5px solid rgba(88,166,255,.6);pointer-events:none;animation:rpl .6s ease-out forwards}
+@keyframes rpl{from{transform:scale(.4);opacity:1}to{transform:scale(2.4);opacity:0}}
+.wlabel{font-size:11px;color:#7d8590;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+canvas{width:100%;height:76px;display:block;border-radius:6px;background:rgba(0,0,0,.3)}
+.frow{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px}
+.fnum{font-family:'Black Han Sans',sans-serif;font-size:26px;color:#58a6ff;line-height:1}
+.funit{font-size:11px;color:#7d8590;margin-left:2px}
+.pbwrap{flex:1;min-width:80px;max-width:240px;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+.pb{height:100%;border-radius:4px;background:linear-gradient(90deg,#1f6feb,#58a6ff,#79c0ff);transition:width .25s}
+.plabel{font-size:12px;font-weight:700;color:#e6edf3;min-width:52px;text-align:right}
+.crow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.clbl{font-size:12px;color:#7d8590;font-weight:700;min-width:70px}
+.cval{font-family:'Black Han Sans',sans-serif;font-size:14px;color:#e6edf3;min-width:38px;text-align:right}
+.selinfo{font-size:12px;color:#58a6ff;font-weight:700}
+input[type=range]{flex:1;min-width:100px;accent-color:#58a6ff;cursor:pointer}
+.brow{display:flex;gap:8px;flex-wrap:wrap}
+button{font-family:'Nanum Gothic',sans-serif;font-size:12px;font-weight:800;padding:8px 15px;border-radius:7px;border:1px solid #30363d;background:rgba(255,255,255,.05);color:#e6edf3;cursor:pointer;transition:background .12s,border-color .12s;letter-spacing:.02em}
+button:hover{background:rgba(88,166,255,.12);border-color:#58a6ff}
+button:active{transform:scale(.97)}
+button.pr{background:#58a6ff;color:#0d1117;border-color:#58a6ff}
+button.pr:hover{background:#79c0ff;border-color:#79c0ff}
+.ttitle{font-family:'Black Han Sans',sans-serif;font-size:13px;color:#79c0ff;margin-bottom:7px}
+.ttext{font-size:12px;color:#7d8590;line-height:1.9}
+.ttext strong{color:#e6edf3}
+</style>
+</head>
+<body>
+<h1>소리의 높낮이 실험</h1>
+<p class="sub">유리컵 속 물의 양에 따라 소리의 높낮이가 어떻게 달라지는지 알아보세요</p>
+<div class="wrap">
+  <div class="stage" id="stage"><div class="floor"></div></div>
+  <div class="panel">
+    <div class="wlabel">음파 파형</div>
+    <canvas id="wc" width="800" height="76"></canvas>
+    <div class="frow">
+      <div><span class="fnum" id="fn">—</span><span class="funit">Hz</span></div>
+      <div class="pbwrap"><div class="pb" id="pb" style="width:0%"></div></div>
+      <div class="plabel" id="pl">—</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="crow"><span class="clbl">선택된 컵</span><span class="selinfo" id="si">컵을 클릭하세요</span></div>
+    <div class="crow">
+      <span class="clbl">물의 양</span>
+      <input type="range" id="sl" min="0" max="100" value="50" oninput="onSl(this.value)">
+      <span class="cval" id="sv">50%</span>
+    </div>
+    <div class="brow">
+      <button class="pr" onclick="doPlay()">두드리기 ▶</button>
+      <button onclick="doAll()">전체 연주 ♪</button>
+      <button onclick="doReset()">초기화</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ttitle">왜 물의 양에 따라 소리가 달라질까요?</div>
+    <p class="ttext">유리컵을 두드리면 <strong>컵과 물이 함께 진동</strong>합니다.<br>물이 많을수록 <strong>진동이 느려지고 → 낮은 소리</strong>가 납니다.<br>물이 적을수록 <strong>높은 소리</strong>가 납니다.</p>
+  </div>
+</div>
+<script>
+var NOTES=['도','레','미','파','솔','라','시','도↑'];
+var RATIO=[1,9/8,5/4,4/3,3/2,5/3,15/8,2];
+var INIT=[20,35,50,62,72,82,90,95];
+var cups=[],sel=null,actx=null,animId=null,wActive=false;
+function audio(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
+function w2f(p,i){return 261.63*RATIO[i]*(1.5-(p/100)*0.85);}
+function f2p(f){return Math.min(100,Math.max(0,((f-150)/450)*100));}
+function flbl(f){return f>500?'매우 높음':f>380?'높음':f>270?'중간':f>200?'낮음':'매우 낮음';}
+function build(){var s=document.getElementById('stage');s.querySelectorAll('.cup').forEach(function(e){e.remove();});cups=[];for(var i=0;i<8;i++){(function(idx){cups.push({w:INIT[idx]});var d=document.createElement('div');d.className='cup';d.id='c'+idx;d.innerHTML='<div class=cnote>'+NOTES[idx]+'</div><svg id=sv'+idx+' width=46 height=148 viewBox="0 0 46 148" style="overflow:visible;display:block"></svg><div class=cpct id=cp'+idx+'>'+INIT[idx]+'%</div>';d.onclick=function(){pick(idx);};s.insertBefore(d,s.querySelector('.floor'));drawC(idx,INIT[idx],false);})(i);}}
+function drawC(idx,wp,act){var svg=document.getElementById('sv'+idx);if(!svg)return;var cH=122,tY=8,bY=130,rW=40,bW=30,w=46;var lT=(w-rW)/2,rT=lT+rW,lB=(w-bW)/2,rB=lB+bW;var wH=(wp/100)*(cH-4),wY=bY-wH,t=wH/cH;var wL=lB+(lT-lB)*t,wR=rB-(rT-rB)*(1-t);var wc=act?'#58a6ff':'#1f6feb',rc=act?'rgba(139,180,255,.65)':'rgba(139,180,255,.28)',sc=act?'#79c0ff':'#388bfd';svg.innerHTML='<defs><clipPath id=cc'+idx+'><polygon points="'+lT+','+tY+' '+rT+','+tY+' '+rB+','+bY+' '+lB+','+bY+'"/></clipPath></defs><polygon points="'+wL+','+wY+' '+wR+','+wY+' '+rB+','+bY+' '+lB+','+bY+'" fill="'+wc+'" opacity=".55" clip-path="url(#cc'+idx+')"/><line x1="'+(wL+2)+'" y1="'+wY+'" x2="'+(wR-2)+'" y2="'+wY+'" stroke="'+sc+'" stroke-width="1.5" opacity=".8" clip-path="url(#cc'+idx+')"/><polygon points="'+lT+','+tY+' '+rT+','+tY+' '+rB+','+bY+' '+lB+','+bY+'" fill="rgba(30,50,90,.18)" stroke="'+rc+'" stroke-width="1.5"/><line x1="'+(lT+3)+'" y1="'+(tY+1)+'" x2="'+(rT-3)+'" y2="'+(tY+1)+'" stroke="rgba(180,210,255,.35)" stroke-width="1"/>';var p=document.getElementById('cp'+idx);if(p)p.textContent=Math.round(wp)+'%';}
+function pick(idx){sel=idx;document.querySelectorAll('#stage .cup').forEach(function(el,i){el.classList.toggle('active',i===idx);drawC(i,cups[i].w,i===idx);});document.getElementById('sl').value=cups[idx].w;document.getElementById('sv').textContent=Math.round(cups[idx].w)+'%';document.getElementById('si').textContent='컵 '+(idx+1)+' ('+NOTES[idx]+') — 물 '+Math.round(cups[idx].w)+'%';idle(idx);}
+function idle(idx){var f=w2f(cups[idx].w,idx);updF(f);wave(f,.3,false);}
+function updF(f){document.getElementById('fn').textContent=Math.round(f);document.getElementById('pb').style.width=f2p(f)+'%';document.getElementById('pl').textContent=flbl(f);}
+function wave(freq,amp,anim){var cv=document.getElementById('wc'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;cancelAnimationFrame(animId);wActive=anim;var sp=freq/80,ph=0,cy=freq/50,wA=amp*(H*.38);function fr(){ctx.clearRect(0,0,W,H);ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(0,0,W,H);ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();ctx.strokeStyle='#58a6ff';ctx.lineWidth=2;ctx.shadowColor='#388bfd';ctx.shadowBlur=5;ctx.beginPath();for(var x=0;x<=W;x++){var y=H/2+Math.sin((x/W)*cy*Math.PI*2+ph)*wA;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='rgba(121,192,255,.22)';ctx.lineWidth=1;ctx.beginPath();for(var x2=0;x2<=W;x2++){var y2=H/2+Math.sin((x2/W)*cy*2*Math.PI*2+ph*2)*wA*.3;x2===0?ctx.moveTo(x2,y2):ctx.lineTo(x2,y2);}ctx.stroke();if(anim){ph+=sp*.12;animId=requestAnimationFrame(fr);}}fr();}
+function playT(freq,dur){dur=dur||.8;var a=audio(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type='sine';o.frequency.setValueAtTime(freq,a.currentTime);g.gain.setValueAtTime(.28,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur);var o2=a.createOscillator(),g2=a.createGain();o2.connect(g2);g2.connect(a.destination);o2.type='sine';o2.frequency.setValueAtTime(freq*2.76,a.currentTime);g2.gain.setValueAtTime(.08,a.currentTime);g2.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur*.7);o.start();o.stop(a.currentTime+dur);o2.start();o2.stop(a.currentTime+dur*.7);updF(freq);wave(freq,1,true);setTimeout(function(){if(wActive){wActive=false;cancelAnimationFrame(animId);wave(freq,.3,false);}},dur*1000+100);}
+function ripple(idx){var w=document.getElementById('c'+idx);if(!w)return;var r=document.createElement('div');r.className='ripple';r.style.cssText='width:38px;height:38px;left:50%;top:50%;margin:-19px 0 0 -19px;';w.appendChild(r);setTimeout(function(){if(r.parentNode)r.parentNode.removeChild(r);},700);}
+function onSl(v){v=parseFloat(v);document.getElementById('sv').textContent=Math.round(v)+'%';if(sel===null)return;cups[sel].w=v;drawC(sel,v,true);document.getElementById('si').textContent='컵 '+(sel+1)+' ('+NOTES[sel]+') — 물 '+Math.round(v)+'%';idle(sel);}
+function doPlay(){if(sel===null){alert('컵을 먼저 클릭하세요!');return;}playT(w2f(cups[sel].w,sel),1);ripple(sel);}
+function doAll(){var d=0;cups.forEach(function(c,i){setTimeout(function(){pick(i);playT(w2f(c.w,i),.6);ripple(i);},d);d+=550;});}
+function doReset(){sel=null;cancelAnimationFrame(animId);document.getElementById('si').textContent='컵을 클릭하세요';document.getElementById('fn').textContent='—';document.getElementById('pb').style.width='0%';document.getElementById('pl').textContent='—';var cv=document.getElementById('wc');cv.getContext('2d').clearRect(0,0,cv.width,cv.height);build();}
+build();
+</script>
+</body>
+</html>
